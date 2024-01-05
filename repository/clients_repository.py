@@ -1,7 +1,7 @@
 from fastapi import Depends
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from utils.mongo_utils import get_db_collection, get_filter, map_student
+from utils.mongo_utils import get_client_collection, get_filter, map_client
 from models.client import Client, UpdateClientModel
 
 
@@ -18,22 +18,22 @@ class ClientRepository:
     async def get_all(self) -> list[Client]:
         db_clients = []
         async for client in self._db_collection.find():
-            db_clients.append(map_student(client))
+            db_clients.append(map_client(client))
         return db_clients
 
     async def get_by_id(self, client_id: str) -> Client | None:
-        print(f'Get student {client_id} from mongo')
+        print(f'Get client {client_id} from mongo')
         db_client = await self._db_collection.find_one(get_filter(client_id))
-        return map_student(db_client)
+        return map_client(db_client)
 
     async def update(self, client_id: str, client: UpdateClientModel) -> Client | None:
         db_client = await self._db_collection.find_one_and_replace(get_filter(client_id), dict(client))
-        return map_student(db_client)
+        return map_client(db_client)
 
     async def delete(self, client_id: str) -> Client | None:
         db_client = await self._db_collection.find_one_and_delete(get_filter(client_id))
-        return map_student(db_client)
+        return map_client(db_client)
 
     @staticmethod
-    def get_client_repo_instance(db_collection: AsyncIOMotorCollection = Depends(get_db_collection)):
+    def get_client_repo_instance(db_collection: AsyncIOMotorCollection = Depends(get_client_collection)):
         return ClientRepository(db_collection)
