@@ -32,7 +32,7 @@ async def get_reservation_collection() -> AsyncIOMotorCollection:
     return db_client.get_database(mongo_db).get_collection(mongo_collection)
 
 
-async def connect_and_init_db():
+async def connect_and_init_mongo():
     global db_client
     mongo_uri = os.getenv('MONGO_URI')
     try:
@@ -42,7 +42,7 @@ async def connect_and_init_db():
     except Exception as e:
         print(f'Exception was catched {e}')
 
-async def close_db_connect():
+async def close_mongo_connect():
     global db_client
     if db_client is None:
         return

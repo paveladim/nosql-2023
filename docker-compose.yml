@@ -1,0 +1,180 @@
+services:
+  api_node_01:
+    build: .
+    env_file:
+      - docker.env
+    depends_on:
+      elasticsearch_node_01:
+        condition: service_healthy
+      elasticsearch_node_02:
+        condition: service_healthy
+      elasticsearch_node_03:
+        condition: service_healthy
+      mongo_db_node_01:
+        condition: service_started
+      mongo_db_node_02:
+        condition: service_started
+      mongo_db_node_03:
+        condition: service_started
+
+  api_node_02:
+    build: .
+    env_file:
+      - docker.env
+    depends_on:
+      elasticsearch_node_01:
+        condition: service_healthy
+      elasticsearch_node_02:
+        condition: service_healthy
+      elasticsearch_node_03:
+        condition: service_healthy
+      mongo_db_node_01:
+        condition: service_started
+      mongo_db_node_02:
+        condition: service_started
+      mongo_db_node_03:
+        condition: service_started
+
+  api_node_03:
+    build: .
+    env_file:
+      - docker.env
+    depends_on:
+      elasticsearch_node_01:
+        condition: service_healthy
+      elasticsearch_node_02:
+        condition: service_healthy
+      elasticsearch_node_03:
+        condition: service_healthy
+      mongo_db_node_01:
+        condition: service_started
+      mongo_db_node_02:
+        condition: service_started
+      mongo_db_node_03:
+        condition: service_started
+
+  mongo_db_node_01:
+    image: mongo:7.0.2
+    healthcheck:
+      test: echo 'db.RunCommand("ping").ok' | mongosh mongo_db_node_01:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    volumes:
+      - ./data/mongo_node_01:/data/db
+    command: mongod -replSet docker-replicaset
+    ports:
+      - 27018:27017
+
+  mongo_db_node_02:
+    image: mongo:7.0.2
+    healthcheck:
+      test: echo 'db.RunCommand("ping").ok' | mongosh mongo_db_node_02:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    volumes:
+      - ./data/mongo_node_02:/data/db
+    command: mongod -replSet docker-replicaset
+    ports:
+      - 27019:27017
+
+  mongo_db_node_03:
+    image: mongo:7.0.2
+    healthcheck:
+      test: echo 'db.RunCommand("ping").ok' | mongosh mongo_db_node_03:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    volumes:
+      - ./data/mongo_node_03:/data/db
+    command: mongod -replSet docker-replicaset
+    ports:
+      - 27020:27017
+
+  mongo_cluster_init:
+    image: mongo:7.0.2
+    depends_on:
+      mongo_db_node_01:
+        condition: service_healthy
+      mongo_db_node_02:
+        condition: service_healthy
+      mongo_db_node_03:
+        condition: service_healthy
+      volumes:
+        - ./infrastructure/init_mongo.js:/scripts/init_mongo.js:ro
+      entrypoint: ["mongosh", "--host", "mongo_db_node_01", "--file", "/scripts/init_mongo.js"]
+
+    elasticsearch_node_01:
+      image: elasticsearch:8.10.2
+      healthcheck:
+        interval: 5s
+        retries: 80
+        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+      environment:
+        - cluster.name=docker-cluster
+        - node.name=elasticsearch_mode_01
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        - discovery.seed_hosts=elasticsearch_node_02,elasticsearch_node_03
+        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+        - xpack.security.enabled=false
+        - http.cors.enabled=true
+      ports:
+        - 9201:9200
+
+    elasticsearch_node_02:
+      image: elasticsearch:8.10.2
+      healthcheck:
+        interval: 5s
+        retries: 80
+        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+      environment:
+        - cluster.name=docker-cluster
+        - node.name=elasticsearch_mode_02
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_03
+        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+        - xpack.security.enabled=false
+        - http.cors.enabled=true
+      ports:
+        - 9202:9200
+
+    elasticsearch_node_03:
+      image: elasticsearch:8.10.2
+      healthcheck:
+        interval: 5s
+        retries: 80
+        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+      environment:
+        - cluster.name=docker-cluster
+        - node.name=elasticsearch_mode_03
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_02
+        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+        - xpack.security.enabled=false
+        - http.cors.enabled=true
+      ports:
+        - 9203:9200
+
+    memcached_node_01:
+      image: memcached
+
+    memcached_node_02:
+      image: memcached
+
+    memcached_node_03:
+      image: memcached
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api_node_01
+      - api_node_02
+      - api_node_03
