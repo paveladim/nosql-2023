@@ -2,7 +2,7 @@ services:
   api_node_01:
     build: .
     env_file:
-      - docker.env
+      - ./infrastructure/docker.env
     depends_on:
       elasticsearch_node_01:
         condition: service_healthy
@@ -20,7 +20,7 @@ services:
   api_node_02:
     build: .
     env_file:
-      - docker.env
+      - ./infrastructure/docker.env
     depends_on:
       elasticsearch_node_01:
         condition: service_healthy
@@ -38,7 +38,7 @@ services:
   api_node_03:
     build: .
     env_file:
-      - docker.env
+      - ./infrastructure/docker.env
     depends_on:
       elasticsearch_node_01:
         condition: service_healthy
@@ -104,69 +104,80 @@ services:
         condition: service_healthy
       mongo_db_node_03:
         condition: service_healthy
-      volumes:
+    volumes:
         - ./infrastructure/init_mongo.js:/scripts/init_mongo.js:ro
-      entrypoint: ["mongosh", "--host", "mongo_db_node_01", "--file", "/scripts/init_mongo.js"]
+    entrypoint: ["mongosh", "--host", "mongo_db_node_01", "--file", "/scripts/init_mongo.js"]
 
-    elasticsearch_node_01:
-      image: elasticsearch:8.10.2
-      healthcheck:
-        interval: 5s
-        retries: 80
-        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
-      environment:
-        - cluster.name=docker-cluster
-        - node.name=elasticsearch_mode_01
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-        - discovery.seed_hosts=elasticsearch_node_02,elasticsearch_node_03
-        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
-        - xpack.security.enabled=false
-        - http.cors.enabled=true
-      ports:
-        - 9201:9200
+  elasticsearch_node_01:
+    image: elasticsearch:8.10.2
+    healthcheck:
+      interval: 5s
+      retries: 80
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=elasticsearch_mode_01
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.seed_hosts=elasticsearch_node_02,elasticsearch_node_03
+      - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+    ports:
+      - 9201:9200
+    volumes:
+      - ./data/elasticsearch_node_01:/usr/share/elasticsearch/data
 
-    elasticsearch_node_02:
-      image: elasticsearch:8.10.2
-      healthcheck:
-        interval: 5s
-        retries: 80
-        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
-      environment:
-        - cluster.name=docker-cluster
-        - node.name=elasticsearch_mode_02
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-        - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_03
-        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
-        - xpack.security.enabled=false
-        - http.cors.enabled=true
-      ports:
+  elasticsearch_node_02:
+    image: elasticsearch:8.10.2
+    healthcheck:
+      interval: 5s
+      retries: 80
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=elasticsearch_mode_02
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_03
+      - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+    ports:
         - 9202:9200
+    volumes:
+      - ./data/elasticsearch_node_02:/usr/share/elasticsearch/data
 
-    elasticsearch_node_03:
-      image: elasticsearch:8.10.2
-      healthcheck:
-        interval: 5s
-        retries: 80
-        test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
-      environment:
-        - cluster.name=docker-cluster
-        - node.name=elasticsearch_mode_03
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-        - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_02
-        - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
-        - xpack.security.enabled=false
-        - http.cors.enabled=true
-      ports:
-        - 9203:9200
+  elasticsearch_node_03:
+    image: elasticsearch:8.10.2
+    healthcheck:
+      interval: 5s
+      retries: 80
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=elasticsearch_mode_03
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.seed_hosts=elasticsearch_node_01,elasticsearch_node_02
+      - cluster.initial_master_nodes=elasticsearch_node_01,elasticsearch_node_02,elasticsearch_node_03
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+    ports:
+      - 9203:9200
+    volumes:
+      - ./data/elasticsearch_node_03:/usr/share/elasticsearch/data
 
-    memcached_node_01:
-      image: memcached
+  hazelcast:
+    image: hazelcast/hazelcast:5.3.0
+    ports:
+      - 5701:5701
 
-    memcached_node_02:
-      image: memcached
+  memcached_node_01:
+    image: memcached
 
-    memcached_node_03:
-      image: memcached
+  memcached_node_02:
+    image: memcached
+
+  memcached_node_03:
+    image: memcached
 
   nginx:
     image: nginx

@@ -1,11 +1,13 @@
+import json
 from bson import ObjectId
 from typing import Any
 from fastapi import APIRouter, Depends, status
 from starlette.responses import Response
 from pymemcache import HashClient
 
-from models.client import Client
+from models.client import Client, UpdateClientModel
 from repository.clients_repository import ClientRepository
+from repository.search_clients_repository import SearchClientsRepository
 from cache.memcached_utils import get_memcached_client
 
 clients_router = APIRouter()
@@ -34,3 +36,18 @@ async def get_clients_by_id(client_id: str,
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     
     return client
+
+@clients_router.post("/srv/post_all")
+async def fill_clients(repository: ClientRepository = Depends(ClientRepository.get_client_repo_instance),
+                       search_repo: SearchClientsRepository = Depends(SearchClientsRepository.get_instance)):
+    with open('./clients_.json', 'r') as src:
+        clients_list = json.load(src)
+        for cl in clients_list:
+            client = UpdateClientModel(
+                name=cl['name'], 
+                surname=cl['surname'],
+                age=int(cl['age']),
+                phone=cl['phone_number'],
+                email=cl['email'])
+            current_id = await repository.create(client)
+            search_repo.create(current_id, client=client)
