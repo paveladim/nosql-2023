@@ -1,15 +1,15 @@
 import os
 from typing import Any
 from bson import ObjectId
-from datetime import datetime
+from datetime import date, datetime
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-from models.client import Client
-from models.apartment import Apartment
-from models.reservation import Reservation
-from utils.inner_utils import cvt_to_bool
+from models.client import Client, UpdateClientModel
+from models.apartment import Apartment, UpdateApartmentModel
+from models.reservation import Reservation, UpdateReservationModel
 
 db_client: AsyncIOMotorClient = None
 
+date_format = '%Y-%m-%d'
 
 async def get_client_collection() -> AsyncIOMotorCollection:
     mongo_db = os.getenv('MONGO_DB')
@@ -62,7 +62,20 @@ def map_client(client: Any) -> Client | None:
         name=client['name'], 
         surname=client['surname'], 
         age=int(client['age']), 
-        phone=client['phone_number'], 
+        phone=client['phone'], 
+        email=client['email']
+    )
+
+
+def map_update_client(client) -> UpdateClientModel | None:
+    if client is None:
+        return None
+
+    return UpdateClientModel(
+        name=client['name'], 
+        surname=client['surname'], 
+        age=int(client['age']), 
+        phone=client['phone'], 
         email=client['email']
     )
 
@@ -77,10 +90,24 @@ def map_apartment(apartment: Any) -> Apartment | None:
         address=apartment['address'],
         zipcode=int(apartment['zipcode']),
         bedrooms=int(apartment['bedrooms']),
-        bathroom_available=cvt_to_bool(apartment['bathroom_available']),
-        wifi_available=cvt_to_bool(apartment['wifi_available']),
-        kitchen_available=cvt_to_bool(apartment['kitchen_available']),
-        bathroom_accessories_available=cvt_to_bool(apartment['bathroom_accessories_available'])
+        bathroom=apartment['bathroom'],
+        wifi=apartment['wifi'],
+        kitchen=apartment['kitchen']
+    )
+
+
+def map_update_apartment(apartment) -> UpdateApartmentModel | None:
+    if apartment is None:
+        return None
+    
+    return UpdateApartmentModel(
+        state=apartment['state'],
+        address=apartment['address'],
+        zipcode=int(apartment['zipcode']),
+        bedrooms=int(apartment['bedrooms']),
+        bathroom=apartment['bathroom'],
+        wifi=apartment['wifi'],
+        kitchen=apartment['kitchen']
     )
 
 
@@ -92,6 +119,20 @@ def map_reservation(reservation: Any) -> Reservation | None:
         id=str(reservation['_id']),
         client_id=reservation['client_id'],
         apartment_id=reservation['apartment_id'],
-        start_date=datetime(reservation['start_date']),
-        end_date=datetime(reservation['end_time'])
+        start_date=reservation['start_date'],
+        end_date=reservation['end_date'],
+        status=reservation['status']
+    )
+
+
+def map_update_reservation(reservation) -> UpdateReservationModel | None:
+    if reservation is None:
+        return None
+    
+    return UpdateReservationModel(
+        client_id=reservation['client_id'],
+        apartment_id=reservation['apartment_id'],
+        start_date=reservation['start_date'],
+        end_date=reservation['end_date'],
+        status=reservation['status']
     )

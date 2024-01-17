@@ -8,6 +8,7 @@ from pymemcache import HashClient
 from models.client import Client, UpdateClientModel
 from repository.clients_repository import ClientRepository
 from repository.search_clients_repository import SearchClientsRepository
+from utils.mongo_utils import map_update_client
 from cache.memcached_utils import get_memcached_client
 
 clients_router = APIRouter()
@@ -16,6 +17,11 @@ clients_router = APIRouter()
 @clients_router.get("/all")
 async def get_all_clients(repository: ClientRepository = Depends(ClientRepository.get_client_repo_instance)) -> list[Client]:
     return await repository.get_all()
+
+
+@clients_router.get("/all_id")
+async def get_all_clients_id(repository: ClientRepository = Depends(ClientRepository.get_client_repo_instance)):
+    return await repository.get_all_id()
 
 
 @clients_router.get("/{client_id}", response_model=Client)
@@ -37,17 +43,20 @@ async def get_clients_by_id(client_id: str,
     
     return client
 
+
 @clients_router.post("/srv/post_all")
 async def fill_clients(repository: ClientRepository = Depends(ClientRepository.get_client_repo_instance),
                        search_repo: SearchClientsRepository = Depends(SearchClientsRepository.get_instance)):
-    with open('./clients_.json', 'r') as src:
+    with open('./clients.json', 'r') as src:
         clients_list = json.load(src)
         for cl in clients_list:
-            client = UpdateClientModel(
-                name=cl['name'], 
-                surname=cl['surname'],
-                age=int(cl['age']),
-                phone=cl['phone_number'],
-                email=cl['email'])
+            client = map_update_client(cl)
             current_id = await repository.create(client)
             search_repo.create(current_id, client=client)
+
+
+@clients_router.delete("/srv/delete_all")
+async def remove_all(repository: ClientRepository = Depends(ClientRepository.get_client_repo_instance),
+                     search_repo: SearchClientsRepository = Depends(SearchClientsRepository.get_instance)) -> Response:
+    await repository.delete_all()
+    return Response()

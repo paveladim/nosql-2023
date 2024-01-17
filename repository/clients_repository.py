@@ -18,7 +18,14 @@ class ClientRepository:
     async def get_all(self) -> list[Client]:
         db_clients = []
         async for client in self._db_collection.find():
+            print(client)
             db_clients.append(map_client(client))
+        return db_clients
+    
+    async def get_all_id(self):
+        db_clients = []
+        async for client in self._db_collection.find():
+            db_clients.append(map_client(client).id)
         return db_clients
 
     async def get_by_id(self, client_id: str) -> Client | None:
@@ -33,6 +40,10 @@ class ClientRepository:
     async def delete(self, client_id: str) -> Client | None:
         db_client = await self._db_collection.find_one_and_delete(get_filter(client_id))
         return map_client(db_client)
+    
+    async def delete_all(self):
+        async for client in self._db_collection.find():
+            await self._db_collection.find_one_and_delete(get_filter(str(client['_id'])))
 
     @staticmethod
     def get_client_repo_instance(db_collection: AsyncIOMotorCollection = Depends(get_client_collection)):

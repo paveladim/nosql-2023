@@ -7,10 +7,9 @@ class Apartment(BaseModel):
     address: str
     zipcode: int
     bedrooms: int
-    bathroom_available: bool
-    wifi_available: bool
-    kitchen_available: bool
-    bathroom_accessories_available: bool
+    bathroom: str
+    wifi: str
+    kitchen: str
 
 
 class UpdateApartmentModel(BaseModel):
@@ -18,7 +17,6 @@ class UpdateApartmentModel(BaseModel):
     address: str
     zipcode: int
     bedrooms: int
-    bathroom_available: bool
-    wifi_available: bool
-    kitchen_available: bool
-    bathroom_accessories_available: bool
+    bathroom: str
+    wifi: str
+    kitchen: str

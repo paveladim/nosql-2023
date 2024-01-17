@@ -20,6 +20,12 @@ class ReservationRepository:
         async for reservation in self._db_collection.find():
             db_reservations.append(map_reservation(reservation))
         return db_reservations
+    
+    async def get_all_id(self):
+        db_reservations = []
+        async for reservation in self._db_collection.find():
+            db_reservations.append(map_reservation(reservation).id)
+        return db_reservations
 
     async def get_by_id(self, reservation_id: str) -> Reservation | None:
         print(f'Get reservation {reservation_id} from mongo')
@@ -33,6 +39,10 @@ class ReservationRepository:
     async def delete(self, reservation_id: str) -> Reservation | None:
         db_reservation = await self._db_collection.find_one_and_delete(get_filter(reservation_id))
         return map_reservation(db_reservation)
+    
+    async def delete_all(self):
+        async for reservation in self._db_collection.find():
+            await self._db_collection.find_one_and_delete(get_filter(str(reservation['_id'])))
 
     @staticmethod
     def get_reservation_repo_instance(db_collection: AsyncIOMotorCollection = Depends(get_reservation_collection)):

@@ -2,8 +2,9 @@ import os
 
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
-from datetime import datetime
+from datetime import date, datetime
 
+from utils.mongo_utils import date_format
 from utils.elasticsearch_utils import get_elasticsearch_client
 from models.reservation import Reservation, UpdateReservationModel
 
@@ -25,7 +26,7 @@ class SearchReservationsRepository:
     async def delete(self, reservation_id: str):
         await self._elasticsearch_client.delete(index=self._elasticsearch_index, id=reservation_id)
 
-    async def find_by_name(self, name: str):
+    async def find_by_apartment_id(self, apartment_id: str):
         index_exist = await self._elasticsearch_client.indices.exists(index=self._elasticsearch_index)
 
         if not index_exist:
@@ -33,8 +34,8 @@ class SearchReservationsRepository:
 
         query = {
             "match": {
-                "name": {
-                    "query": name
+                "apartment_id": {
+                    "query": apartment_id
                 }
             }
         }
@@ -46,8 +47,8 @@ class SearchReservationsRepository:
             id=reservation['_id'], 
             client_id=reservation['_source']['client_id'],
             apartment_id=reservation['_source']['apartment_id'],
-            start_date=datetime(reservation['_source']['start_date']),
-            end_date=datetime(reservation['_source']['end_date']),
+            start_date=reservation['_source']['start_date'],
+            end_date=reservation['_source']['end_date'],
             status=reservation['_source']['status']), result))
         return reservations
 

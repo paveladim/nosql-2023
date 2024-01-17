@@ -20,6 +20,13 @@ class ApartmentRepository:
         async for apartment in self._db_collection.find():
             db_apartments.append(map_apartment(apartment))
         return db_apartments
+    
+    async def get_all_id(self):
+        db_apartments = []
+        async for apartment in self._db_collection.find():
+            print(apartment)
+            db_apartments.append(map_apartment(apartment).id)
+        return db_apartments
 
     async def get_by_id(self, apartment_id: str) -> Apartment | None:
         print(f'Get client {apartment_id} from mongo')
@@ -33,6 +40,10 @@ class ApartmentRepository:
     async def delete(self, apartment_id: str) -> Apartment | None:
         db_apartment = await self._db_collection.find_one_and_delete(get_filter(apartment_id))
         return map_apartment(db_apartment)
+    
+    async def delete_all(self):
+        async for apartment in self._db_collection.find():
+            await self._db_collection.find_one_and_delete(get_filter(str(apartment['_id'])))
 
     @staticmethod
     def get_apartment_repo_instance(db_collection: AsyncIOMotorCollection = Depends(get_apartment_collection)):

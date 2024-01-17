@@ -6,6 +6,7 @@ from handler.event_handlers import startup, shutdown
 from routers.apartments_router import apartments_router
 from routers.clients_router import clients_router
 from routers.reservations_router import reservations_router
+from utils.elasticsearch_utils import create_indexes
 
 
 app = FastAPI()
@@ -23,6 +24,10 @@ app.add_event_handler("shutdown", shutdown)
 async def read_root():
     print(os.getenv('MONGO_URI'))
     return {"Hello" : "World"}
+
+# @app.get("/create_indices")
+# async def create_ind():
+#     await create_indexes()
 
 
 if __name__ == "__main__":

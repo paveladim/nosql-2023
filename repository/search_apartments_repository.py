@@ -5,7 +5,6 @@ from fastapi import Depends
 
 from utils.elasticsearch_utils import get_elasticsearch_client
 from models.apartment import Apartment, UpdateApartmentModel
-from utils.inner_utils import cvt_to_bool
 
 
 class SearchApartmentsRepository:
@@ -25,16 +24,17 @@ class SearchApartmentsRepository:
     async def delete(self, client_id: str):
         await self._elasticsearch_client.delete(index=self._elasticsearch_index, id=client_id)
 
-    async def find_by_name(self, name: str):
-        index_exist = await self._elasticsearch_client.indices.exists(index=self._elasticsearch_index)
+    async def find_by_state(self, state: str):
+        print(state)
+        index_exist = await self._elasticsearch_client.indices.exists(index='apartments')
 
         if not index_exist:
             return []
 
         query = {
             "match": {
-                "name": {
-                    "query": name
+                "state": {
+                    "query": state
                 }
             }
         }
@@ -48,10 +48,9 @@ class SearchApartmentsRepository:
             address=apartment['_source']['address'],
             zipcode=apartment['_source']['zipcode'],
             bedrooms=int(apartment['_source']['bedrooms']),
-            bathroom_available=cvt_to_bool(apartment['_source']['bathroom_available']),
-            wifi_available=cvt_to_bool(apartment['_source']['wifi_available']),
-            kitchen_available=cvt_to_bool(apartment['_source']['kitchen_available']),
-            bathroom_accessories_available=cvt_to_bool(apartment['_source']['bathroom_accessories_available'])), result))
+            bathroom=apartment['_source']['bathroom'],
+            wifi=apartment['_source']['wifi'],
+            kitchen=apartment['_source']['kitchen']), result))
         return apartments
 
     @staticmethod
