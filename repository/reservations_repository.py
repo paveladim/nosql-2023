@@ -31,6 +31,13 @@ class ReservationRepository:
         print(f'Get reservation {reservation_id} from mongo')
         db_reservation = await self._db_collection.find_one(get_filter(reservation_id))
         return map_reservation(db_reservation)
+    
+    async def get_all_by_apartment_id(self, apartment_id: str):
+        db_reservations = []
+        async for reservation in self._db_collection.find({"apartment_id" : apartment_id}):
+            db_reservations.append(map_reservation(reservation))
+        return db_reservations
+    
 
     async def update(self, reservation_id: str, reservation: UpdateReservationModel) -> Reservation | None:
         db_reservation = await self._db_collection.find_one_and_replace(get_filter(reservation_id), dict(reservation))

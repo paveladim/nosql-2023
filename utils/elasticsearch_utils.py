@@ -27,11 +27,6 @@ async def close_elasticsearch_connect():
     await elasticsearch_client.close()
 
 
-async def create_indexes():
-    create_client_index()
-    create_apartment_index()
-    await create_reservation_index()
-
 async def create_client_index():
     try:
         mappings = {
@@ -43,15 +38,15 @@ async def create_client_index():
                 "email": {"type": "text"}
             }
         }
-
-        global elasticsearch_client
-        response = await elasticsearch_client.indices.create(index=os.getenv('ELASTICSEARCH_CLIENT_INDEX'), mappings=mappings)
+ 
+        es_client = get_elasticsearch_client()
+        response = await es_client.indices.create(index=os.getenv('ELASTICSEARCH_CLIENT_INDEX'), mappings=mappings)
         return response
     except Exception as e:
         print(f"Error creating client index: {e}")
         return None
     
-
+ 
 async def create_apartment_index():
     try:
         mappings = {
@@ -65,15 +60,15 @@ async def create_apartment_index():
                 "kitchen": {"type": "text"}
             }
         }
-
-        global elasticsearch_client
-        response = await elasticsearch_client.indices.create(index=os.getenv('ELASTICSEARCH_APARTMENT_INDEX'), mappings=mappings)
+ 
+        es_client = get_elasticsearch_client()
+        response = await es_client.indices.create(index=os.getenv('ELASTICSEARCH_APARTMENT_INDEX'), mappings=mappings)
         return response
     except Exception as e:
         print(f"Error creating apartment index: {e}")
         return None
-
-
+ 
+ 
 async def create_reservation_index():
     try:
         mappings = {
@@ -85,9 +80,9 @@ async def create_reservation_index():
                 "status": {"type": "text"}
             }
         }
-
-        global elasticsearch_client
-        response = await elasticsearch_client.indices.create(index=os.getenv('ELASTICSEARCH_RESERVATION_INDEX'), mappings=mappings)
+ 
+        es_client = get_elasticsearch_client()
+        response = await es_client.indices.create(index=os.getenv('ELASTICSEARCH_RESERVATION_INDEX'), mappings=mappings)
         return response
     except Exception as e:
         print(f"Error creating reservation index: {e}")

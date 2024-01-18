@@ -24,10 +24,30 @@ async def get_all_apartments_id(repository: ApartmentRepository = Depends(Apartm
     return await repository.get_all_id()
 
 
-@apartments_router.get("/state/{state}", response_model=Apartment)
+@apartments_router.get("/state/{state}")
 async def get_all_apartments_by_state(state: str,
+                                      repository: ApartmentRepository = Depends(ApartmentRepository.get_apartment_repo_instance),
                                       search_repo: SearchApartmentsRepository = Depends(SearchApartmentsRepository.get_instance)):
-    return await search_repo.find_by_state(state)
+    #return await search_repo.find_by_state(state)
+    return await repository.get_all_by_state(state)
+
+
+@apartments_router.get("/state/{state}/bedrooms/{bedrooms}/wifi/{wifi}")
+async def get_all_apartments_by_state(state: str,
+                                      bedrooms: str,
+                                      wifi: str,
+                                      repository: ApartmentRepository = Depends(ApartmentRepository.get_apartment_repo_instance),
+                                      search_repo: SearchApartmentsRepository = Depends(SearchApartmentsRepository.get_instance)):
+    #return await search_repo.find_by_state(state)
+    return await repository.get_all_by_sbw(state, int(bedrooms), wifi)
+
+
+@apartments_router.get("/state/{state}")
+async def get_all_apartments_by_state(state: str,
+                                      repository: ApartmentRepository = Depends(ApartmentRepository.get_apartment_repo_instance),
+                                      search_repo: SearchApartmentsRepository = Depends(SearchApartmentsRepository.get_instance)):
+    #return await search_repo.find_by_state(state)
+    return await repository.get_all_by_state(state)
 
 
 @apartments_router.get("/{apartment_id}", response_model=Apartment)

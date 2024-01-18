@@ -32,6 +32,20 @@ class ApartmentRepository:
         print(f'Get client {apartment_id} from mongo')
         db_apartment = await self._db_collection.find_one(get_filter(apartment_id))
         return map_apartment(db_apartment)
+    
+
+    async def get_all_by_state(self, state: str):
+        db_apartments = []
+        async for apartment in self._db_collection.find({"state" : state}):
+            db_apartments.append(map_apartment(apartment))
+        return db_apartments
+    
+    async def get_all_by_sbw(self, state: str, bedrooms: int, wifi: str):
+        db_apartments = []
+        async for apartment in self._db_collection.find({"state" : state, "bedrooms" : bedrooms, "wifi" : wifi}):
+            db_apartments.append(map_apartment(apartment))
+        return db_apartments
+    
 
     async def update(self, apartment_id: str, apartment: UpdateApartmentModel) -> Apartment | None:
         db_apartment = await self._db_collection.find_one_and_replace(get_filter(apartment_id), dict(apartment))

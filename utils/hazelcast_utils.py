@@ -1,12 +1,33 @@
-# import hazelcast
+import hazelcast
 
 
-# def get_hazelcast_client():
-#     client = hazelcast.HazelcastClient()
-#     return client
+def get_hazelcast_client():
+    client = hazelcast.HazelcastClient()
+    print('Hazelcast')
+    return client
 
 
-# hazelcast_client = get_hazelcast_client()
+hazelcast_client = None
+
+
+def get_hazelcast_client():
+    return hazelcast_client
+
+
+def connect_and_init_hazelcast():
+    global hazelcast_client
+    try:
+        hazelcast_client = hazelcast.HazelcastClient(cluster_members=["localhost:5701"])
+        print(f'Connected to hazelcast')
+    except Exception as e:
+        print(f'Cant connect to memcached: {e}')
+
+
+def close_hazelcast_connect():
+    global hazelcast_client
+    if hazelcast_client is None:
+        return
+    hazelcast_client.shutdown()
 
 
 # def cache_reservation(reservation_id, reservation):
@@ -38,26 +59,28 @@
 #         return e
 
 
-# def lock_reservation(reservation_id):
-#     try:
-#         reservation_lock = hazelcast_client.cp_subsystem.get_lock("myLock@group" +
-#                                                              str(reservation_id)).blocking()
-#         fence = reservation_lock.try_lock()
-#         if fence != reservation_lock.INVALID_FENCE:
-#             print(f"Ticket ID {reservation_id} locked successfully.")
-#             return True
-#         print(f"Ticket ID {reservation_id} is already locked.")
-#         return False
-#     except Exception as e:
-#         print(f"Error locking ticket ID {reservation_id}: {e}")
-#         return False
+def lock_apartment(apartment_id):
+    try:
+        hazelcast_client = get_hazelcast_client()
+        apartment_lock = hazelcast_client.cp_subsystem.get_lock("myLock@group" +
+                                                             str(apartment_id)).blocking()
+        fence = apartment_lock.try_lock()
+        if fence != apartment_lock.INVALID_FENCE:
+            print(f"Apartment ID {apartment_id} locked successfully.")
+            return True
+        print(f"Apartment ID {apartment_id} is already locked.")
+        return False
+    except Exception as e:
+        print(f"Error locking apartment ID {apartment_id}: {e}")
+        return False
 
 
-# def unlock_reservation(reservation_id):
-#     try:
-#         reservation_lock = hazelcast_client.cp_subsystem.get_lock("myLock@group" +
-#                                                              str(reservation_id)).blocking()
-#         reservation_lock.unlock()
-#         print(f"Ticket ID {reservation_id} unlocked successfully.")
-#     except Exception as e:
-#         print(f"Error unlocking ticket ID {reservation_id}: {e}")
+def unlock_apartment(apartment_id):
+   try:
+       hazelcast_client = get_hazelcast_client()
+       apartment_lock = hazelcast_client.cp_subsystem.get_lock("myLock@group" +
+                                                             str(apartment_id)).blocking()
+       apartment_lock.unlock()
+       print(f"Apartment ID {apartment_id} unlocked successfully.")
+   except Exception as e:
+       print(f"Error unlocking apartment ID {apartment_id}: {e}")
